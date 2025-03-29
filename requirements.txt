@@ -1,0 +1,19 @@
+# API and data fetching
+google-api-python-client==2.107.0
+google-auth==2.23.0
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.1.1
+pytube==15.0.0
+youtube-transcript-api==0.6.1
+
+# NLP and summarization
+transformers==4.35.2
+torch==2.1.0
+nltk==3.8.1
+
+# Email functionality
+python-dotenv==1.0.0
+
+# Utilities
+tqdm==4.66.1
+pandas==2.1.0
