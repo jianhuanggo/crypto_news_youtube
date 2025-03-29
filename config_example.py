@@ -13,7 +13,8 @@ SEARCH_QUERIES = [
     "crypto market analysis"
 ]
 MAX_SEARCH_RESULTS = 10  # Number of channels to find per search query
-CHANNEL_RELEVANCE_THRESHOLD = 0.7  # Threshold for determining if a channel is crypto-focused (0-1)
+# Threshold for determining if a channel is crypto-focused (0-1)
+CHANNEL_RELEVANCE_THRESHOLD = 0.7
 
 VIDEOS_PER_CHANNEL = 5  # Number of recent videos to download per channel
 MIN_VIDEO_LENGTH_SECONDS = 300  # Minimum video length (5 minutes)
@@ -22,7 +23,8 @@ DOWNLOAD_DIR = "downloads"  # Directory to store downloaded videos
 
 SUMMARY_MIN_LENGTH = 100  # Minimum length of summary in words
 SUMMARY_MAX_LENGTH = 300  # Maximum length of summary in words
-SUMMARIZATION_MODEL = "facebook/bart-large-cnn"  # HuggingFace model for summarization
+# HuggingFace model for summarization
+SUMMARIZATION_MODEL = "facebook/bart-large-cnn"
 
 EMAIL_SENDER = "your_email@example.com"
 EMAIL_PASSWORD = "your_app_password"  # Use app password for Gmail

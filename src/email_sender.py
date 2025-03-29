@@ -8,7 +8,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
 
 import config
@@ -19,9 +19,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class EmailSender:
     """Class for sending email reports."""
-    
+
     def __init__(
         self,
         sender_email: str = None,
@@ -32,7 +33,7 @@ class EmailSender:
     ):
         """
         Initialize the email sender.
-        
+
         Args:
             sender_email: Email address to send from. If None, uses the value from config.
             sender_password: Password or app password for the sender email. If None, uses the value from config.
@@ -45,9 +46,9 @@ class EmailSender:
         self.recipient_email = recipient_email or config.EMAIL_RECIPIENT
         self.smtp_server = smtp_server or config.EMAIL_SMTP_SERVER
         self.smtp_port = smtp_port or config.EMAIL_SMTP_PORT
-        
+
         logger.info("Email sender initialized")
-    
+
     def send_email(
         self,
         subject: str,
@@ -57,13 +58,13 @@ class EmailSender:
     ) -> bool:
         """
         Send an email.
-        
+
         Args:
             subject: Email subject
             body_html: HTML content of the email
             body_text: Plain text content of the email. If None, uses the HTML content.
             attachments: List of file paths to attach to the email
-            
+
         Returns:
             True if the email was sent successfully, False otherwise
         """
@@ -72,38 +73,40 @@ class EmailSender:
             msg['Subject'] = subject
             msg['From'] = self.sender_email
             msg['To'] = self.recipient_email
-            
+
             if body_text:
                 msg.attach(MIMEText(body_text, 'plain'))
-            
+
             msg.attach(MIMEText(body_html, 'html'))
-            
+
             if attachments:
                 for attachment_path in attachments:
                     if os.path.exists(attachment_path):
                         with open(attachment_path, 'rb') as f:
                             attachment = MIMEApplication(f.read())
-                            attachment_filename = os.path.basename(attachment_path)
+                            attachment_filename = os.path.basename(
+                                attachment_path)
                             attachment.add_header(
                                 'Content-Disposition',
                                 f'attachment; filename="{attachment_filename}"'
                             )
                             msg.attach(attachment)
                     else:
-                        logger.warning(f"Attachment not found: {attachment_path}")
-            
+                        logger.warning(
+                            f"Attachment not found: {attachment_path}")
+
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.sender_email, self.sender_password)
                 server.send_message(msg)
-            
+
             logger.info(f"Email sent successfully to: {self.recipient_email}")
             return True
-        
+
         except Exception as e:
             logger.error(f"Error sending email: {e}")
             return False
-    
+
     def send_summary_report(
         self,
         summaries: List[Dict[str, Any]],
@@ -112,24 +115,24 @@ class EmailSender:
     ) -> bool:
         """
         Send a summary report email.
-        
+
         Args:
             summaries: List of summary information dictionaries
             report_title: Title of the report
             attachments: List of file paths to attach to the email
-            
+
         Returns:
             True if the email was sent successfully, False otherwise
         """
         if not summaries:
             logger.warning("No summaries provided for the report")
             return False
-        
+
         try:
             report_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             subject = f"{report_title} - {report_date}"
-            
+
             html_content = f"""
             <html>
             <head>
@@ -144,7 +147,13 @@ class EmailSender:
                     .video-summary-text {{ margin-top: 10px; }}
                     .video-link {{ color: #3498db; text-decoration: none; }}
                     .video-link:hover {{ text-decoration: underline; }}
-                    .footer {{ margin-top: 40px; font-size: 12px; color: #7f8c8d; border-top: 1px solid #eee; padding-top: 10px; }}
+                    .footer {{
+                        margin-top: 40px;
+                        font-size: 12px;
+                        color: #7f8c8d;
+                        border-top: 1px solid #eee;
+                        padding-top: 10px;
+                    }}
                 </style>
             </head>
             <body>
@@ -153,7 +162,7 @@ class EmailSender:
                     <p>Report generated on {report_date}</p>
                     <p>Here are the latest summaries from cryptocurrency YouTube channels:</p>
             """
-            
+
             for summary in summaries:
                 video_title = summary.get('title', 'Untitled Video')
                 channel_title = summary.get('channel_title', 'Unknown Channel')
@@ -161,7 +170,7 @@ class EmailSender:
                 published_at = summary.get('published_at', 'Unknown date')
                 view_count = summary.get('view_count', 'N/A')
                 summary_text = summary.get('summary', 'No summary available')
-                
+
                 html_content += f"""
                     <div class="video-summary">
                         <div class="video-title">
@@ -175,7 +184,7 @@ class EmailSender:
                         </div>
                     </div>
                 """
-            
+
             html_content += """
                     <div class="footer">
                         <p>This is an automated report generated by the Crypto YouTube News Summarizer.</p>
@@ -184,10 +193,10 @@ class EmailSender:
             </body>
             </html>
             """
-            
+
             text_content = f"{report_title}\n\nReport generated on {report_date}\n\n"
             text_content += "Here are the latest summaries from cryptocurrency YouTube channels:\n\n"
-            
+
             for summary in summaries:
                 video_title = summary.get('title', 'Untitled Video')
                 channel_title = summary.get('channel_title', 'Unknown Channel')
@@ -195,25 +204,25 @@ class EmailSender:
                 published_at = summary.get('published_at', 'Unknown date')
                 view_count = summary.get('view_count', 'N/A')
                 summary_text = summary.get('summary', 'No summary available')
-                
+
                 text_content += f"""
                 {video_title}
                 Channel: {channel_title} | Published: {published_at} | Views: {view_count}
                 URL: {video_url}
-                
+
                 {summary_text}
-                
+
                 ----------------------------------------
-                
+
                 """
-            
+
             return self.send_email(
                 subject=subject,
                 body_html=html_content,
                 body_text=text_content,
                 attachments=attachments
             )
-        
+
         except Exception as e:
             logger.error(f"Error sending summary report: {e}")
             return False
