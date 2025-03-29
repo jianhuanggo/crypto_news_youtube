@@ -21,6 +21,7 @@ from src.transcript_extractor import TranscriptExtractor
 from src.content_summarizer import ContentSummarizer
 from src.report_generator import ReportGenerator
 from src.email_sender import EmailSender
+from src.scheduler import Scheduler
 import config
 
 logging.basicConfig(
@@ -72,6 +73,19 @@ def parse_arguments():
     parser.add_argument(
         "--email-recipient",
         help="Email address to send the report to (overrides config)"
+    )
+    
+    parser.add_argument(
+        "--schedule",
+        action="store_true",
+        help="Run the script on a schedule"
+    )
+    
+    parser.add_argument(
+        "--schedule-interval",
+        type=int,
+        default=config.SCHEDULE_INTERVAL,
+        help="Interval in hours between scheduled runs"
     )
     
     return parser.parse_args()
@@ -253,12 +267,18 @@ def process_videos(
     logger.info(f"Successfully processed {len(processed_videos)} videos")
     return processed_videos
 
-def main():
-    """Main function to run the Crypto YouTube News Summarizer."""
-    try:
-        args = parse_arguments()
+def run_workflow(args):
+    """
+    Run the Crypto YouTube News Summarizer workflow.
+    
+    Args:
+        args: Command-line arguments
         
-        logger.info("Starting Crypto YouTube News Summarizer")
+    Returns:
+        True if the workflow completed successfully, False otherwise
+    """
+    try:
+        logger.info("Starting Crypto YouTube News Summarizer workflow")
         
         search_queries = args.search_queries or config.SEARCH_QUERIES
         
@@ -276,7 +296,7 @@ def main():
         
         if not channels:
             logger.warning("No crypto YouTube channels found")
-            return
+            return False
         
         all_summaries = []
         for channel in channels:
@@ -310,7 +330,7 @@ def main():
         
         if not all_summaries:
             logger.warning("No summaries generated for any channel")
-            return
+            return False
         
         logger.info(f"Generating comprehensive report with {len(all_summaries)} summaries")
         report_path = report_generator.generate_report(all_summaries)
@@ -332,10 +352,44 @@ def main():
                 logger.info("Email report sent successfully")
             else:
                 logger.error("Failed to send email report")
+                return False
         else:
             logger.info("Skipping email report")
         
-        logger.info("Crypto YouTube News Summarizer completed successfully")
+        logger.info("Crypto YouTube News Summarizer workflow completed successfully")
+        return True
+    
+    except Exception as e:
+        logger.error(f"Error running Crypto YouTube News Summarizer workflow: {e}", exc_info=True)
+        return False
+
+def main():
+    """Main function to run the Crypto YouTube News Summarizer."""
+    try:
+        args = parse_arguments()
+        
+        logger.info("Starting Crypto YouTube News Summarizer")
+        
+        if args.schedule:
+            logger.info(f"Running in scheduled mode with interval: {args.schedule_interval} hours")
+            
+            scheduler = Scheduler(interval_hours=args.schedule_interval)
+            scheduler.start(run_workflow, args)
+            
+            try:
+                next_run = scheduler.get_next_run()
+                logger.info(f"Next run scheduled for: {next_run}")
+                
+                logger.info("Press Ctrl+C to stop the scheduler")
+                while True:
+                    time.sleep(60)
+                    
+            except KeyboardInterrupt:
+                logger.info("Stopping scheduler")
+                scheduler.stop()
+                logger.info("Scheduler stopped")
+        else:
+            run_workflow(args)
     
     except KeyboardInterrupt:
         logger.info("Process interrupted by user")
