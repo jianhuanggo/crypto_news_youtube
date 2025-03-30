@@ -1,0 +1,6 @@
+# Test dependencies
+pytest==7.4.0
+pytest-mock==3.11.1
+
+# Minimal dependencies for testing
+python-dotenv==1.0.0
